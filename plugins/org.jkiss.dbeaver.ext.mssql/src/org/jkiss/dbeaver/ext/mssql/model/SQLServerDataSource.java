@@ -22,11 +22,13 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.ext.mssql.SQLServerConstants;
+import org.jkiss.dbeaver.ext.mssql.SQLServerDataSourceProvider;
 import org.jkiss.dbeaver.ext.mssql.SQLServerUtils;
 import org.jkiss.dbeaver.ext.mssql.model.session.SQLServerSessionManager;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.admin.sessions.DBAServerSessionManager;
 import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
+import org.jkiss.dbeaver.model.connection.DBPDriver;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.exec.DBCQueryTransformType;
@@ -38,6 +40,7 @@ import org.jkiss.dbeaver.model.impl.jdbc.JDBCRemoteInstance;
 import org.jkiss.dbeaver.model.impl.jdbc.JDBCUtils;
 import org.jkiss.dbeaver.model.impl.jdbc.cache.JDBCObjectCache;
 import org.jkiss.dbeaver.model.meta.Association;
+import org.jkiss.dbeaver.model.net.DBWHandlerConfiguration;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.*;
 import org.jkiss.dbeaver.utils.GeneralUtils;
@@ -45,9 +48,7 @@ import org.jkiss.utils.BeanUtils;
 import org.jkiss.utils.CommonUtils;
 
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 public class SQLServerDataSource extends JDBCDataSource implements DBSInstanceContainer, DBPObjectStatisticsCollector, IAdaptable {
 
@@ -385,6 +386,36 @@ public class SQLServerDataSource extends JDBCDataSource implements DBSInstanceCo
         } finally {
             hasStatistics = true;
         }
+    }
+
+    @Override
+    protected Map<String, String> getInternalConnectionProperties(DBRProgressMonitor monitor, DBPDriver driver, JDBCExecutionContext context, String purpose, DBPConnectionConfiguration connectionInfo) throws DBCException {
+        Map<String, String> props = new HashMap<>(SQLServerDataSourceProvider.getConnectionsProps());
+
+        // TODO: Do something with 'encrypt' and 'trustStoreType'
+
+        DBWHandlerConfiguration sslConfig = getContainer().getActualConnectionConfiguration().getHandler(SQLServerConstants.HANDLER_SSL);
+        if (sslConfig != null && sslConfig.isEnabled()) {
+            final String keyStoreProp = sslConfig.getStringProperty(SQLServerConstants.PROP_SSL_KEYSTORE);
+            if (!CommonUtils.isEmpty(keyStoreProp)) {
+                props.put("trustStore", keyStoreProp);
+            }
+
+            final String keystorePasswordProp = sslConfig.getStringProperty(SQLServerConstants.PROP_SSL_KEYSTORE_PASSWORD);
+            if (!CommonUtils.isEmpty(keystorePasswordProp)) {
+                props.put("trustStorePassword", keystorePasswordProp);
+            }
+
+            final String keystoreHostnameProp = sslConfig.getStringProperty(SQLServerConstants.PROP_SSL_KEYSTORE_HOSTNAME);
+            if (!CommonUtils.isEmpty(keystoreHostnameProp)) {
+                props.put("hostNameInCertificate", keystoreHostnameProp);
+            }
+
+            final boolean keystoreTrustServerProp = sslConfig.getBooleanProperty(SQLServerConstants.PROP_SSL_TRUST_SERVER_CERT);
+            props.put("trustServerCertificate", CommonUtils.toString(keystoreTrustServerProp));
+        }
+
+        return props;
     }
 
     static class DatabaseCache extends JDBCObjectCache<SQLServerDataSource, SQLServerDatabase> {

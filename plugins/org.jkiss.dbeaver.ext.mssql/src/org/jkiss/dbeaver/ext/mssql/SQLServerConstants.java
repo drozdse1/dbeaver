@@ -77,6 +77,12 @@ public class SQLServerConstants {
     public static final String PROP_CONNECTION_INTEGRATED_SECURITY = "integratedSecurity";
     public static final String PROP_CONNECTION_AUTHENTICATION = "authentication";
     public static final String PROP_CONNECTION_AUTHENTICATION_SCHEME = "authenticationScheme";
+    public static final String PROP_SSL_KEYSTORE = "sslKeyStore";
+    public static final String PROP_SSL_KEYSTORE_PASSWORD = "sslKeyStorePassword";
+    public static final String PROP_SSL_KEYSTORE_HOSTNAME = "sslKeyStoreHostname";
+    public static final String PROP_SSL_TRUST_SERVER_CERT = "sslTrustServerCert";
+
+    public static final String HANDLER_SSL = "mssql_ssl";
 
     public static final String PROP_TRUST_SERVER_CERTIFICATE = "trustServerCertificate";
     public static final String PROP_DOMAIN = "domain";
